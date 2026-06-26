@@ -7,15 +7,15 @@
     <style>
         :root {
             --bg: #0f172a;
-            --bg-sec: #1e293b;
-            --felt: #1a4a2e;
-            --gold: #f59e0b;
-            --gold-light: rgba(245, 158, 11, 0.2);
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
+            --bg-sec: #1e1b4b; /* midnight blue */
+            --felt: #065f46; /* emerald green */
+            --gold: #fbbf24;
+            --gold-light: rgba(251, 191, 36, 0.2);
+            --primary: #4338ca;
+            --primary-hover: #3730a3;
             --text: #f8fafc;
             --text-sec: #94a3b8;
-            --border: #334155;
+            --border: #312e81;
             --red: #ef4444;
             --green: #10b981;
             --cw: 70px;
@@ -83,6 +83,26 @@
         .btn-red:hover { background: #dc2626; }
         .btn-sm { padding: 0.5rem 1rem; min-width: auto; font-size: 0.9rem; }
 
+        .audio-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: 0.3s;
+        }
+        .audio-control:hover { background: var(--gold); color: black; }
+
         /* --- Table Screen --- */
         #screen-game { background-color: #020617; }
         #game-header {
@@ -95,14 +115,31 @@
             border-bottom: 1px solid var(--border);
             z-index: 10;
         }
-        .pot-display { font-size: 1.5rem; font-weight: 800; color: var(--gold); background: rgba(0,0,0,0.3); padding: 5px 20px; border-radius: 20px; border: 1px solid var(--gold-light); }
+        .pot-display {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--gold);
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 50%;
+            border: 4px double var(--gold);
+            width: 140px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 0 20px var(--gold-light);
+            z-index: 10;
+        }
 
         #game-table {
             position: relative;
             width: 90%;
             max-width: 1000px;
             height: 60%;
-            background: radial-gradient(circle, #2d6a4f 0%, #1b4332 100%);
+            background: radial-gradient(circle, var(--felt) 0%, #064e3b 100%);
             border: 12px solid #3f2a1d;
             border-radius: 200px;
             box-shadow: inset 0 0 100px rgba(0,0,0,0.7), 0 20px 50px rgba(0,0,0,0.5);
@@ -110,6 +147,29 @@
             align-items: center;
             justify-content: center;
             margin: auto;
+            /* Embroidery Pattern on Rim */
+            outline: 4px solid var(--gold);
+            outline-offset: -8px;
+        }
+        #game-table::before {
+            content: "";
+            position: absolute;
+            top: -12px; left: -12px; right: -12px; bottom: -12px;
+            border-radius: 200px;
+            border: 8px solid transparent;
+            border-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20L20 0L40 20L20 40Z' fill='none' stroke='%23fbbf24' stroke-width='2'/%3E%3C/svg%3E") 20 round;
+            pointer-events: none;
+        }
+
+        .table-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15rem;
+            color: rgba(251, 191, 36, 0.05);
+            pointer-events: none;
+            z-index: 1;
         }
 
         .player-pos {
@@ -121,28 +181,34 @@
             z-index: 5;
         }
 
-        .p-0 { bottom: -80px; left: 50%; transform: translateX(-50%); } /* You */
-        .p-1 { left: -100px; top: 50%; transform: translateY(-50%); }
-        .p-2 { top: -80px; left: 50%; transform: translateX(-50%); }
-        .p-3 { right: -100px; top: 50%; transform: translateY(-50%); }
+        .p-0 { bottom: -40px; left: 50%; transform: translateX(-50%); } /* You */
+        .p-1 { left: -60px; top: 50%; transform: translateY(-50%); }
+        .p-2 { top: -40px; left: 50%; transform: translateX(-50%); }
+        .p-3 { right: -60px; top: 50%; transform: translateY(-50%); }
 
         .player-card {
             background: var(--bg-sec);
             border: 2px solid var(--border);
             border-radius: 1rem;
             padding: 12px;
-            width: 130px;
+            width: 120px;
             text-align: center;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
             position: relative;
             transition: 0.3s;
         }
-        .player-card.active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); }
+        .p-0 .player-card { width: 160px; padding: 16px; } /* Larger footprint for You */
+        .player-card.active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); animation: active-glow 1s infinite alternate; }
+        @keyframes active-glow { from { box-shadow: 0 0 10px var(--gold); } to { box-shadow: 0 0 25px var(--gold); } }
         .player-card.eliminated { opacity: 0.5; filter: grayscale(1); }
 
         .avatar { width: 50px; height: 50px; background: #334155; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 2px solid var(--border); }
         .name { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
         .money { color: var(--gold); font-weight: 800; font-size: 1.1rem; }
+        .profit { font-weight: 700; font-size: 0.85rem; margin-top: 2px; }
+        .profit-plus { color: #10b981; }
+        .profit-minus { color: #ef4444; }
+        .profit-zero { color: #94a3b8; }
 
         .dealer-badge {
             position: absolute;
@@ -182,14 +248,20 @@
         .card .bottom-right { align-self: flex-end; font-size: 1.2rem; line-height: 1; transform: rotate(180deg); }
         .card .suit-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.2rem; opacity: 0.8; }
 
-        .card.back { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: transparent; border: 3px solid white; }
+        .card.back {
+            background-color: #b91c1c;
+            background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10L10 0L20 10L10 20Z' fill='%23fbbf24' fill-opacity='0.2'/%3E%3C/svg%3E");
+            color: transparent;
+            border: 3px solid white;
+        }
         .card.back::after {
-            content: '🃏';
+            content: 'ⵣ';
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            color: rgba(255,255,255,0.2);
-            font-size: 2.5rem;
+            color: #fbbf24;
+            font-size: 2rem;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
         .card.red { color: var(--red); }
         .card.selected { transform: translateY(-25px); border: 4px solid var(--gold); box-shadow: 0 10px 20px rgba(0,0,0,0.4), 0 0 15px var(--gold-light); }
@@ -304,25 +376,30 @@
         .room-code { font-size: 2.5rem; font-weight: 900; color: var(--gold); background: var(--bg-sec); padding: 10px 30px; border-radius: 12px; margin: 1rem 0; border: 2px solid var(--border); }
     </style>
 </head>
-<body>
+<body onclick="audio.init()">
+
+<div class="audio-control" onclick="audio.toggleMusic()">
+    <span id="music-toggle-icon">🔇</span>
+</div>
 
 <div id="app">
     <!-- Menu Screen -->
     <div id="screen-menu" class="screen active">
-        <h1 class="menu-title">ALGERIAN POKER</h1>
-        <button class="btn btn-primary" onclick="game.startSetup('cpu')">🕹️ Play vs Computer</button>
-        <button class="btn btn-gold" onclick="game.startSetup('online')">🌐 Play Online</button>
+        <h1 class="menu-title">KABYLE POKER</h1>
+        <button class="btn btn-primary" onclick="audio.mechanicalClick(); game.startSetup('cpu')">🕹️ Play vs Computer</button>
+        <button class="btn btn-gold" onclick="audio.mechanicalClick(); game.startSetup('online')">🌐 Play Online</button>
     </div>
 
     <!-- Setup Screen -->
     <div id="screen-setup" class="screen">
+        <button class="btn btn-sm btn-red" style="position: absolute; top: 20px; left: 20px; min-width: auto;" onclick="audio.mechanicalClick(); ui.showScreen('screen-menu')">↩ Back</button>
         <h2 class="menu-title" style="font-size: 2.5rem;">Player Count</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 2rem;">
-            <button class="btn btn-sm" onclick="game.setupPlayers(2)">2 Players</button>
-            <button class="btn btn-sm" onclick="game.setupPlayers(3)">3 Players</button>
-            <button class="btn btn-sm" onclick="game.setupPlayers(4)">4 Players</button>
+            <button class="btn btn-sm" onclick="audio.mechanicalClick(); game.setupPlayers(2)">2 Players</button>
+            <button class="btn btn-sm" onclick="audio.mechanicalClick(); game.setupPlayers(3)">3 Players</button>
+            <button class="btn btn-sm" onclick="audio.mechanicalClick(); game.setupPlayers(4)">4 Players</button>
         </div>
-        <button class="btn btn-red btn-sm" onclick="game.goHome()">Return to Menu</button>
+        <button class="btn btn-red btn-sm" onclick="audio.mechanicalClick(); game.goHome()">Return to Menu</button>
     </div>
 
     <!-- Online Lobby Screen -->
@@ -330,36 +407,42 @@
         <h2 class="menu-title" style="font-size: 2.5rem;">Online Multiplayer</h2>
 
         <div id="lobby-join" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-            <button class="btn btn-gold" onclick="multiplayer.createRoom()">Create New Room</button>
+            <button class="btn btn-gold" onclick="audio.mechanicalClick(); multiplayer.createRoom()">Create New Room</button>
             <p>OR</p>
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="join-code" placeholder="Enter Code" class="btn btn-sm" style="background: white; color: black; min-width: 150px; text-align: center; text-transform: uppercase;">
-                <button class="btn btn-sm" onclick="multiplayer.joinRoom()">Join Room</button>
+                <button class="btn btn-sm" onclick="audio.mechanicalClick(); multiplayer.joinRoom()">Join Room</button>
             </div>
         </div>
 
         <div id="lobby-waiting" class="hidden" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <button class="btn btn-sm btn-red" style="position: absolute; top: 20px; left: 20px; min-width: auto;" onclick="audio.mechanicalClick(); multiplayer.leave()">❌ Quit Room</button>
             <p>Room Code:</p>
             <div class="room-code" id="display-room-code">------</div>
             <p id="lobby-status">Waiting for players (1/4)...</p>
             <div id="lobby-players-list" style="margin: 1rem 0; display: flex; gap: 10px;"></div>
-            <button id="btn-start-multi" class="btn btn-gold hidden" onclick="multiplayer.requestStart()">Start Game</button>
+            <button id="btn-start-multi" class="btn btn-gold hidden" onclick="audio.mechanicalClick(); multiplayer.requestStart()">Start Game</button>
         </div>
 
-        <button class="btn btn-red btn-sm" style="margin-top: 2rem;" onclick="multiplayer.leave()">Back to Menu</button>
+        <button class="btn btn-red btn-sm" style="margin-top: 2rem;" onclick="audio.mechanicalClick(); multiplayer.leave()">Back to Menu</button>
     </div>
 
     <!-- Game Screen -->
     <div id="screen-game" class="screen">
         <div id="game-header">
-            <button class="btn btn-red btn-sm" style="min-width: 100px;" onclick="game.confirmQuit()">Quit</button>
-            <div class="pot-display">POT: <span id="pot-amount">$0</span></div>
-            <button class="btn btn-primary btn-sm" style="min-width: 100px;" onclick="ui.toggleHistory()">History</button>
+            <button class="btn btn-red btn-sm" style="min-width: 100px;" onclick="audio.mechanicalClick(); game.confirmQuit()">🏠 Home</button>
+            <div style="font-size: 1.5rem; font-weight: 900; color: var(--gold);">KABYLE POKER</div>
+            <button class="btn btn-primary btn-sm" style="min-width: 100px;" onclick="audio.mechanicalClick(); ui.toggleHistory()">History</button>
         </div>
 
         <div id="game-table">
+            <div class="table-watermark">ⵣ</div>
             <div class="center-zone">
                 <div id="current-phase" class="phase-text">IDLE</div>
+                <div class="pot-display">
+                    <div style="font-size: 0.8rem; opacity: 0.8;">POT</div>
+                    <div id="pot-amount">$0.00</div>
+                </div>
                 <div class="timer-circle">
                     <svg><circle id="timer-svg" cx="40" cy="40" r="38"></circle></svg>
                     <span id="timer-display">180</span>
@@ -388,7 +471,7 @@
 <div id="history-panel">
     <h3>Action History</h3>
     <ul id="history-list" class="history-list"></ul>
-    <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 1rem;" onclick="ui.toggleHistory()">Close</button>
+    <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 1rem;" onclick="audio.mechanicalClick(); ui.toggleHistory()">Close</button>
 </div>
 
 <div id="toast-container"></div>
@@ -403,26 +486,137 @@
     // --- Audio System ---
     const audio = {
         ctx: null,
-        isMuted: false,
+        isMuted: true,
         bgmTimeout: null,
-        init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+        noiseBuffer: null,
+        init() {
+            if (this.ctx) return;
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.createNoiseBuffer();
+        },
+        createNoiseBuffer() {
+            const bufferSize = 2 * this.ctx.sampleRate;
+            this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const output = this.noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+        },
         toggleMusic() {
             this.isMuted = !this.isMuted;
-            document.getElementById('music-toggle').textContent = this.isMuted ? '🔇 Unmute' : '🎵 Mute';
+            const icon = document.getElementById('music-toggle-icon');
+            if (icon) icon.textContent = this.isMuted ? '🔇' : '🎵';
             if (!this.isMuted) this.playBGM();
             else clearTimeout(this.bgmTimeout);
         },
         playBGM() {
             if (this.isMuted || game.state === 'IDLE') return;
-            const notes = [261.63, 329.63, 392.00, 523.25];
-            let i = 0;
+            const tempo = 120; // BPM
+            const eighthNote = 60 / tempo / 2;
+            let beat = 0;
+
+            const bassPattern = [110, 138.59, 164.81, 123.47]; // A2, C#3, E3, B2
+            const rhodesPattern = [
+                [220, 277.18, 329.63], // Amaj
+                [220, 277.18, 329.63],
+                [220, 277.18, 329.63],
+                [220, 277.18, 329.63]
+            ];
+
             const loop = () => {
                 if (this.isMuted || game.state === 'IDLE') return;
-                this.play(notes[i % notes.length], 'sine', 4, 0.01);
-                i++;
-                this.bgmTimeout = setTimeout(loop, 2000);
+
+                // Bass on every beat
+                if (beat % 2 === 0) {
+                    this.playBass(bassPattern[(beat / 2) % bassPattern.length], eighthNote * 1.5);
+                }
+
+                // Rhodes on beat 1 and 3
+                if (beat % 4 === 0) {
+                    const chord = rhodesPattern[(beat / 4) % rhodesPattern.length];
+                    chord.forEach(freq => this.playRhodes(freq, eighthNote * 4));
+                }
+
+                // Brush swing pattern
+                if (beat % 2 === 0) {
+                    this.playBrush(0.05); // Downbeat
+                } else {
+                    this.playBrush(0.02); // Upbeat (swing)
+                }
+
+                beat++;
+                this.bgmTimeout = setTimeout(loop, eighthNote * 1000);
             };
             loop();
+        },
+        playBass(freq, duration, vol = 0.2) {
+            try {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            } catch(e) {}
+        },
+        playRhodes(freq, duration, vol = 0.1) {
+            try {
+                this.init();
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc1.type = 'sine';
+                osc2.type = 'square';
+                osc1.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                osc2.frequency.setValueAtTime(freq * 2.01, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc1.start();
+                osc2.start();
+                osc1.stop(this.ctx.currentTime + duration);
+                osc2.stop(this.ctx.currentTime + duration);
+            } catch(e) {}
+        },
+        playBrush(vol = 0.05) {
+            try {
+                this.init();
+                const source = this.ctx.createBufferSource();
+                const filter = this.ctx.createBiquadFilter();
+                const gain = this.ctx.createGain();
+                source.buffer = this.noiseBuffer;
+                filter.type = 'highpass';
+                filter.frequency.value = 5000;
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+                source.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                source.start();
+            } catch(e) {}
+        },
+        mechanicalClick() {
+            try {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            } catch(e) {}
         },
         play(freq, type, duration, vol = 0.1) {
             try {
@@ -483,21 +677,24 @@
 
         setupPlayers(count) {
             this.players = [];
-            const names = ['You', 'Bot Amir', 'Bot Yassine', 'Bot Karim'];
-            const avatars = ['👤', '🤖', '🤖', '🤖'];
+            const names = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+            const avatars = ['👤', '👤', '👤', '👤'];
             for (let i = 0; i < count; i++) {
                 this.players.push({
                     id: i,
                     name: names[i],
                     avatar: avatars[i],
                     isAI: i > 0,
-                    money: 15,
+                    money: 10,
+                    startingMoney: 10,
                     hand: [],
                     isActive: true,
                     isOut: false,
                     isEliminated: false,
                     hasCut: false,
+                    hasRaisedThisTurn: false,
                     paidThisRound: 0,
+                    totalContributed: 0,
                     status: '',
                     cardsToChange: []
                 });
@@ -512,17 +709,21 @@
             if (!keepPot) this.pot = 0;
             this.entryAmount = 1;
             this.currentDealAmount = 0;
+            this.highestPreGameBet = 1; // Dealer ante
             this.lastRaiserIdx = -1;
             this.doublerIdx = -1;
             this.isDoubled = false;
             this.isDeckCut = false;
+            this.cutQueued = false;
             this.isAnimating = false;
 
             this.players.forEach(p => {
                 p.hand = [];
                 p.isOut = false;
                 p.hasCut = false;
+                p.hasRaisedThisTurn = false;
                 p.paidThisRound = 0;
+                p.totalContributed = 0;
                 p.status = '';
                 p.cardsToChange = [];
                 if (p.money <= 0) p.isEliminated = true;
@@ -540,17 +741,21 @@
         },
 
         async dealerSelect() {
-            ui.updatePhase('Selecting Dealer');
-            let spinIdx = Math.floor(Math.random() * this.players.length);
-            const spins = 15 + Math.floor(Math.random() * 10);
-            for (let i = 0; i < spins; i++) {
-                spinIdx = (spinIdx + 1) % this.players.length;
-                while (this.players[spinIdx].isEliminated) spinIdx = (spinIdx + 1) % this.players.length;
-                ui.highlightPlayer(spinIdx);
-                audio.tick();
-                await new Promise(r => setTimeout(r, 100 + (i * 15)));
+            if (this.dealerIdx === -1) {
+                ui.updatePhase('Selecting Dealer');
+                let spinIdx = Math.floor(Math.random() * this.players.length);
+                const spins = 15 + Math.floor(Math.random() * 10);
+                for (let i = 0; i < spins; i++) {
+                    spinIdx = (spinIdx + 1) % this.players.length;
+                    while (this.players[spinIdx].isEliminated) spinIdx = (spinIdx + 1) % this.players.length;
+                    ui.highlightPlayer(spinIdx);
+                    audio.tick();
+                    await new Promise(r => setTimeout(r, 100 + (i * 15)));
+                }
+                this.dealerIdx = spinIdx;
+            } else {
+                this.dealerIdx = this.getNextActive(this.dealerIdx);
             }
-            this.dealerIdx = spinIdx;
             audio.ding();
             ui.toast(`🎯 ${this.players[this.dealerIdx].name} is Dealer`);
             ui.renderTable();
@@ -571,12 +776,12 @@
         preDealPhase() {
             this.state = 'PRE_DEAL';
             ui.updatePhase('Pre-Deal Actions');
-            // Starts clockwise from Dealer
+            this.canRaiseChain = true;
             this.activeIdx = this.getNextActive(this.dealerIdx);
-            this.actionQueue = []; // To keep track of who acted
             const turnOrder = [];
             let curr = this.activeIdx;
-            for(let i=0; i<this.players.filter(p=>!p.isEliminated).length; i++) {
+            const activePlayers = this.players.filter(p=>!p.isEliminated);
+            for(let i=0; i<activePlayers.length; i++) {
                 turnOrder.push(curr);
                 curr = this.getNextActive(curr);
             }
@@ -627,10 +832,12 @@
             const p = this.players[this.activeIdx];
             if (type === 'skip') {
                 ui.toast(`⏭️ ${p.name} SKIPPED`);
+                if (this.state === 'PRE_DEAL') this.canRaiseChain = false;
             } else if (type === 'cut') {
                 this.isDeckCut = true;
+                this.cutQueued = true;
                 p.hasCut = true;
-                this.deck = this.cutDeck(this.deck);
+                // No actual deck cut until dealCards because deck is generated there
                 ui.toast(`✂️ ${p.name} CUT the deck`);
                 this.isAnimating = true;
                 ui.renderTable();
@@ -640,14 +847,24 @@
                 this.isDoubled = true;
                 this.doublerIdx = this.activeIdx;
                 this.entryAmount *= 2;
+                this.highestPreGameBet *= 2;
                 ui.toast(`💰 ${p.name} DOUBLED to $${this.entryAmount}`);
                 audio.ding();
             } else if (type === 'raise_pre') {
                 const amount = val || (p.isAI ? Math.floor(Math.random() * 3) + 1 : 1);
                 this.payMoney(p, amount);
                 this.lastRaiserIdx = this.activeIdx;
+                p.hasRaisedThisTurn = true;
+                this.highestPreGameBet = p.paidThisRound;
                 ui.toast(`💰 ${p.name} RAISED pot by $${amount}`);
                 audio.ding();
+                if (this.state === 'PRE_DEAL') {
+                    ui.renderTable();
+                    if (p.isAI) {
+                        setTimeout(() => this.aiAction(), 1000);
+                    }
+                    return;
+                }
             } else if (type === 'distribute') {
                 this.dealCards();
                 return;
@@ -656,12 +873,16 @@
                 p.status = 'OUT';
                 ui.toast(`❌ ${p.name} is OUT`);
                 audio.whoosh();
+                ui.animateFold(this.activeIdx);
             } else if (type === 'pay') {
                 const diff = this.entryAmount - p.paidThisRound;
                 if (diff > 0) this.payMoney(p, diff);
                 ui.toast(`✅ ${p.name} PAYS`);
             } else if (type === 'change') {
                 p.cardsToChange = val; // array of indices
+                this.executeChange(p);
+                return;
+            } else if (type === 'keep') {
                 this.executeChange(p);
                 return;
             } else if (type === 'pass_bet') {
@@ -753,15 +974,19 @@
 
             this.deck = this.generateDeck();
             this.shuffle(this.deck);
-
+            if (this.cutQueued) {
+                this.cutDeck(this.deck);
+            }
 
             // Deal 5 cards each
             for (let c = 0; c < HAND_SIZE; c++) {
                 let curr = this.getNextActive(this.dealerIdx);
-                for (let i = 0; i < this.players.filter(p => !p.isEliminated).length; i++) {
+                const activeCount = this.players.filter(p => !p.isEliminated).length;
+                for (let i = 0; i < activeCount; i++) {
                     const p = this.players[curr];
                     const card = this.deck.pop();
-                    if (c === 0 && p.hasCut) card.faceUp = true;
+                    // Punishment: If someone cut, Dealer's 1st card is face-up
+                    if (c === 0 && i === (activeCount - 1) && this.cutQueued) card.faceUp = true;
                     p.hand.push(card);
                     audio.card();
                     ui.renderTable();
@@ -777,18 +1002,18 @@
         changeCardsPhase() {
             this.state = 'CHANGE_CARDS';
             ui.updatePhase('Change Cards');
-            this.determineFirstTalker();
-            this.activeIdx = this.firstTalkerIdx;
+            this.activeIdx = this.getNextActive(this.dealerIdx);
             while(this.players[this.activeIdx].isOut) this.activeIdx = this.getNextActive(this.activeIdx);
             this.startTurn();
         },
 
         async executeChange(p) {
             const count = p.cardsToChange.length;
+            // Equalizer Math: Deduction = (Highest Pre-Game Bet) - (Already Paid)
+            const diff = this.highestPreGameBet - p.paidThisRound;
+            if (diff > 0) this.payMoney(p, diff);
+
             if (count > 0) {
-                // Payment
-                const diff = this.entryAmount - p.paidThisRound;
-                if (diff > 0) this.payMoney(p, diff);
 
                 // Discard
                 p.cardsToChange.sort((a,b) => b-a).forEach(idx => {
@@ -814,7 +1039,14 @@
             ui.updatePhase('Betting Round');
             this.currentDealAmount = 0;
             this.players.forEach(p => p.paidThisRound = 0); // Reset for this round
-            this.activeIdx = this.firstTalkerIdx;
+
+            if (this.lastRaiserIdx !== -1) {
+                this.activeIdx = this.lastRaiserIdx;
+            } else {
+                this.activeIdx = this.getNextActive(this.dealerIdx);
+            }
+            this.firstTalkerIdx = this.activeIdx;
+
             while(this.players[this.activeIdx].isOut) this.activeIdx = this.getNextActive(this.activeIdx);
             this.lastRaiserIdx = -1;
             this.startTurn();
@@ -844,7 +1076,10 @@
         },
 
         noBetRestart() {
-            ui.toast("📦 No actions - restarting round");
+            ui.toast("📦 All Pass - Pot rolls over");
+            this.players.forEach(p => {
+                p.hand.forEach(c => c.faceUp = false); // Ensure hidden
+            });
             setTimeout(() => this.initRound(true), 2000);
         },
 
@@ -860,12 +1095,12 @@
                     card.faceUp = true;
                     audio.card();
                     ui.renderTable();
-                    await new Promise(r => setTimeout(r, 400));
+                    await new Promise(r => setTimeout(r, 300));
                 }
                 const res = this.evaluateHand(p.hand);
                 p.finalHand = res;
                 ui.toast(`⚔️ ${p.name} has ${res.name}`);
-                await new Promise(r => setTimeout(r, 1000));
+                await new Promise(r => setTimeout(r, 800));
             }
 
             if (this.mode === 'online' && !multiplayer.isHost) return; // Only host determines winner
@@ -873,19 +1108,46 @@
         },
 
         determineWinner() {
-            const active = this.players.filter(p => !p.isEliminated && !p.isOut);
-            active.sort((a,b) => this.compareHands(b.finalHand, a.finalHand));
-            const winner = active[0];
+            const playersByHand = this.players
+                .filter(p => !p.isEliminated && !p.isOut)
+                .sort((a,b) => this.compareHands(b.finalHand, a.finalHand));
 
             this.state = 'WINNER';
-            ui.showWin(winner);
+            const primaryWinner = playersByHand[0];
+            ui.showWin(primaryWinner); // Primary winner display
             audio.win();
 
-            // Move pot
-            winner.money += this.pot;
+            // Universal Side Pot Logic: "You can only win what you match."
+            let remainingPot = this.pot;
+
+            // Collect all contributions
+            const contributions = this.players.map(p => ({ id: p.id, amount: p.totalContributed }));
+
+            playersByHand.forEach(winner => {
+                const winnerPaid = contributions.find(c => c.id === winner.id).amount;
+                if (winnerPaid <= 0) return;
+
+                let winnableFromThisPot = 0;
+                contributions.forEach(c => {
+                    const take = Math.min(c.amount, winnerPaid);
+                    winnableFromThisPot += take;
+                    c.amount -= take;
+                });
+
+                if (winnableFromThisPot > 0) {
+                    winner.money += winnableFromThisPot;
+                    remainingPot -= winnableFromThisPot;
+                }
+            });
+
+            // If any pot remains (all active folded or logic edge case), give to absolute winner
+            if (remainingPot > 0) {
+                primaryWinner.money += remainingPot;
+                ui.animateChips('pot', primaryWinner.id);
+            }
+
             this.pot = 0;
             ui.renderTable();
-
             setTimeout(() => this.checkEliminations(), 4000);
         },
 
@@ -951,10 +1213,14 @@
             }
         },
         payMoney(p, amount) {
+            if (amount > p.money) amount = p.money; // All-in safeguard
+            if (amount <= 0) return;
             p.money -= amount;
             p.paidThisRound += amount;
+            p.totalContributed += amount;
             this.pot += amount;
             audio.coin();
+            ui.animateChips(p.id, 'pot');
             ui.renderTable();
             if (this.mode === 'online' && multiplayer.isHost) multiplayer.sendState();
         },
@@ -999,20 +1265,31 @@
             const rand = Math.random();
 
             if (this.state === 'PRE_DEAL') {
-                const isP2 = this.activeIdx === this.getNextActive(this.dealerIdx);
+                const isP1 = this.activeIdx === this.getNextActive(this.dealerIdx);
+                const isP2 = this.activeIdx === this.getNextActive(this.getNextActive(this.dealerIdx)); // This is not quite right if player count varies.
+                // Re-calculating based on dealerIdx
+                let p1Idx = this.getNextActive(this.dealerIdx);
+                let p2Idx = this.getNextActive(p1Idx);
                 const isDealer = this.activeIdx === this.dealerIdx;
 
-                if (isP2) {
+                if (this.activeIdx === p1Idx) {
+                    if (!p.hasRaisedThisTurn && rand < 0.70) this.action('raise_pre');
+                    else if (!this.isDeckCut && rand < 0.35) this.action('cut');
+                    else this.action('skip');
+                } else if (this.activeIdx === p2Idx) {
+                    const canRaise = (this.canRaiseChain && this.lastRaiserIdx !== -1);
                     if (rand < 0.35 && !this.isDeckCut) this.action('cut');
-                    else if (rand < 0.60) this.action('raise_pre');
+                    else if (rand < 0.60 && canRaise) this.action('raise_pre');
                     else if (rand < 0.80) this.action('double');
                     else this.action('skip');
                 } else if (!isDealer) {
+                    const canRaise = (this.canRaiseChain && this.lastRaiserIdx !== -1);
                     if (rand < 0.35 && !this.isDeckCut) this.action('cut');
-                    else if (rand < 0.60) this.action('raise_pre');
+                    else if (rand < 0.60 && canRaise) this.action('raise_pre');
                     else this.action('skip');
                 } else {
-                    if (rand < 0.30) this.action('raise_pre');
+                    const canRaise = (this.canRaiseChain && this.lastRaiserIdx !== -1);
+                    if (rand < 0.30 && canRaise) this.action('raise_pre');
                     else this.action('skip');
                 }
             } else if (this.state === 'DOUBLE_PAYMENT') {
@@ -1082,22 +1359,28 @@
         },
         toggleHistory() { document.getElementById('history-panel').classList.toggle('open'); },
         renderTable() {
-            document.getElementById('pot-amount').textContent = `$${game.pot}`;
+            document.getElementById('pot-amount').textContent = `$${game.pot.toFixed(2)}`;
+            if (game.state === 'IDLE') return;
             game.players.forEach((p, i) => {
                 const el = document.getElementById(`p-${i}`);
                 if (!el) return;
+                const profit = p.money - 10;
+                const profitText = profit === 0 ? `$0.00` : (profit > 0 ? `+$${profit.toFixed(2)}` : `-$${Math.abs(profit).toFixed(2)}`);
+                const profitClass = profit === 0 ? 'profit-zero' : (profit > 0 ? 'profit-plus' : 'profit-minus');
+
                 el.innerHTML = `
                     <div class="player-card ${game.activeIdx === i ? 'active' : ''} ${p.isEliminated ? 'eliminated' : ''}">
                         ${game.dealerIdx === i ? '<div class="dealer-badge">DEALER</div>' : ''}
                         <div class="avatar">${p.avatar}</div>
                         <div class="name">${p.name}</div>
-                        <div class="money">$${p.money}</div>
+                        <div class="money">$${p.money.toFixed(2)}</div>
+                        <div class="profit ${profitClass}">${profitText}</div>
                         ${p.status ? `<div class="badge bg-red">${p.status}</div>` : ''}
                     </div>
                     <div class="hand" id="hand-${i}">
                         ${p.hand.map((c, idx) => `
                             <div class="card ${c.faceUp || i === game.myId ? '' : 'back'} ${c.color} ${p.cardsToChange.includes(idx) ? 'selected' : ''}"
-                                 onclick="ui.selectCard(${i}, ${idx})">
+                                 onclick="audio.mechanicalClick(); ui.selectCard(${i}, ${idx})">
                                 <div class="top-left">${c.rank}<br>${c.suit}</div>
                                 <div class="suit-center">${c.suit}</div>
                                 <div class="bottom-right">${c.rank}<br>${c.suit}</div>
@@ -1133,30 +1416,40 @@
             if (p.isOut || p.isEliminated) return;
 
             if (game.state === 'PRE_DEAL') {
-                const isP2 = game.activeIdx === game.getNextActive(game.dealerIdx);
-                if (isP2) container.innerHTML += `<button class="btn btn-gold" onclick="game.action('double')">💰 DOUBLE</button>`;
-                container.innerHTML += `<button class="btn" onclick="game.action('raise_pre')">⬆️ RAISE</button>`;
-                if (game.activeIdx !== game.dealerIdx && !game.isDeckCut) container.innerHTML += `<button class="btn" onclick="game.action('cut')">✂️ CUT</button>`;
-                container.innerHTML += `<button class="btn btn-red" onclick="game.action('skip')">⏭️ SKIP</button>`;
+                const p1Idx = game.getNextActive(game.dealerIdx);
+                const p2Idx = game.getNextActive(p1Idx);
+                const isP1 = game.activeIdx === p1Idx;
+                const isP2 = game.activeIdx === p2Idx;
+
+                if (isP2 && !p.hasRaisedThisTurn) container.innerHTML += `<button class="btn btn-gold" onclick="audio.mechanicalClick(); game.action('double')">💰 DOUBLE</button>`;
+
+                const showRaise = !p.hasRaisedThisTurn && (isP1 || (game.canRaiseChain && game.lastRaiserIdx !== -1));
+                if (showRaise) container.innerHTML += `<button class="btn" onclick="audio.mechanicalClick(); game.action('raise_pre')">⬆️ RAISE</button>`;
+
+                if (game.activeIdx !== game.dealerIdx && !game.isDeckCut) container.innerHTML += `<button class="btn" onclick="audio.mechanicalClick(); game.action('cut')">✂️ CUT</button>`;
+                container.innerHTML += `<button class="btn btn-red" onclick="audio.mechanicalClick(); game.action('skip')">⏭️ SKIP</button>`;
             } else if (game.state === 'DOUBLE_PAYMENT') {
-                container.innerHTML += `<button class="btn btn-gold" onclick="game.action('pay')">✅ PAY $${game.entryAmount - p.paidThisRound}</button>`;
-                container.innerHTML += `<button class="btn btn-red" onclick="game.action('out')">❌ OUT</button>`;
+                container.innerHTML += `<button class="btn btn-gold" onclick="audio.mechanicalClick(); game.action('pay')">✅ PAY $${game.entryAmount - p.paidThisRound}</button>`;
+                container.innerHTML += `<button class="btn btn-red" onclick="audio.mechanicalClick(); game.action('out')">❌ OUT</button>`;
             } else if (game.state === 'DEALER_DECISION') {
-                container.innerHTML += `<button class="btn btn-gold" onclick="game.action('distribute')">🎴 DISTRIBUTE</button>`;
-                container.innerHTML += `<button class="btn" onclick="game.action('raise_pre')">⬆️ RAISE</button>`;
+                container.innerHTML += `<button class="btn btn-gold" onclick="audio.mechanicalClick(); game.action('distribute')">🎴 DISTRIBUTE</button>`;
+                container.innerHTML += `<button class="btn" onclick="audio.mechanicalClick(); game.action('raise_pre')">⬆️ RAISE</button>`;
             } else if (game.state === 'CHANGE_CARDS') {
                 const count = p.cardsToChange.length;
-                if (count > 0) container.innerHTML += `<button class="btn btn-gold" onclick="game.action('change', game.players[game.myId].cardsToChange)">🔄 CHANGE ${count}</button>`;
-                else container.innerHTML += `<button class="btn" onclick="game.action('change', [])">⏭️ KEEP ALL</button>`;
-                container.innerHTML += `<button class="btn btn-red" onclick="game.action('out')">❌ OUT</button>`;
+                const equalizer = game.highestPreGameBet - p.paidThisRound;
+                const eqText = equalizer > 0 ? ` ($${equalizer.toFixed(2)})` : "";
+                if (count > 0) container.innerHTML += `<button class="btn btn-gold" onclick="audio.mechanicalClick(); game.action('change', game.players[game.myId].cardsToChange)">🔄 CHANGE ${count}${eqText}</button>`;
+                else container.innerHTML += `<button class="btn" onclick="audio.mechanicalClick(); game.action('keep')">⏭️ KEEP ALL${eqText}</button>`;
+                container.innerHTML += `<button class="btn btn-red" onclick="audio.mechanicalClick(); game.action('out')">❌ OUT</button>`;
             } else if (game.state === 'BETTING') {
                 if (game.currentDealAmount === 0) {
-                    container.innerHTML += `<button class="btn btn-gold" onclick="game.action('deal_bet', 1)">💰 DEAL $1</button>`;
-                    container.innerHTML += `<button class="btn" onclick="game.action('pass_bet')">⏭️ PASS</button>`;
+                    container.innerHTML += `<button class="btn btn-gold" onclick="audio.mechanicalClick(); game.action('deal_bet', 1)">💰 BET $1</button>`;
+                    container.innerHTML += `<button class="btn" onclick="audio.mechanicalClick(); game.action('pass_bet')">⏭️ PASS</button>`;
+                    container.innerHTML += `<button class="btn btn-red" onclick="audio.mechanicalClick(); game.action('out')">❌ OUT</button>`;
                 } else {
-                    container.innerHTML += `<button class="btn btn-gold" onclick="game.action('call_bet')">✅ PAY $${game.currentDealAmount - p.paidThisRound}</button>`;
-                    container.innerHTML += `<button class="btn" onclick="game.action('raise_bet', 1)">⬆️ RAISE $1</button>`;
-                    container.innerHTML += `<button class="btn btn-red" onclick="game.action('out')">❌ OUT</button>`;
+                    container.innerHTML += `<button class="btn btn-gold" onclick="audio.mechanicalClick(); game.action('call_bet')">✅ PAY $${(game.currentDealAmount - p.paidThisRound).toFixed(2)}</button>`;
+                    container.innerHTML += `<button class="btn" onclick="audio.mechanicalClick(); game.action('raise_bet', 1)">⬆️ RAISE $1</button>`;
+                    container.innerHTML += `<button class="btn btn-red" onclick="audio.mechanicalClick(); game.action('out')">❌ OUT</button>`;
                 }
             }
         },
@@ -1165,8 +1458,79 @@
             over.classList.remove('hidden');
             document.getElementById('win-player-name').textContent = winner.name;
             document.getElementById('win-hand-name').textContent = winner.finalHand.name;
-            document.getElementById('win-amount').textContent = `+$${game.pot}`;
-            setTimeout(() => over.classList.add('hidden'), 4000);
+            document.getElementById('win-amount').textContent = `+$${game.pot.toFixed(2)}`;
+
+            // Highlight winner
+            const winHand = document.getElementById(`hand-${winner.id}`);
+            if (winHand) {
+                winHand.querySelectorAll('.card').forEach(c => c.style.border = '4px solid var(--gold)');
+                winHand.style.filter = 'drop-shadow(0 0 15px var(--gold))';
+            }
+
+            setTimeout(() => {
+                over.classList.add('hidden');
+                if (winHand) {
+                    winHand.querySelectorAll('.card').forEach(c => c.style.border = '');
+                    winHand.style.filter = '';
+                }
+            }, 4000);
+        },
+        animateFold(pIdx) {
+            const hand = document.getElementById(`hand-${pIdx}`);
+            if (!hand) return;
+            const cards = hand.querySelectorAll('.card');
+            cards.forEach((c, i) => {
+                c.classList.remove('back');
+                c.style.transition = "all 0.6s ease-in";
+                c.style.transform = `translate(${(Math.random()-0.5)*100}px, ${(Math.random()-0.5)*100}px) rotate(${(Math.random()-0.5)*60}deg)`;
+                c.style.opacity = "0.5";
+            });
+        },
+        animateChips(from, to) {
+            const table = document.getElementById('game-table');
+            const rect = table.getBoundingClientRect();
+
+            let startX, startY, endX, endY;
+
+            if (from === 'pot') {
+                startX = rect.width / 2;
+                startY = rect.height / 2;
+            } else {
+                const el = document.getElementById(`p-${from}`);
+                if (!el) return;
+                const r = el.getBoundingClientRect();
+                startX = r.left + r.width/2 - rect.left;
+                startY = r.top + r.height/2 - rect.top;
+            }
+
+            if (to === 'pot') {
+                endX = rect.width / 2;
+                endY = rect.height / 2;
+            } else {
+                const el = document.getElementById(`p-${to}`);
+                if (!el) return;
+                const r = el.getBoundingClientRect();
+                endX = r.left + r.width/2 - rect.left;
+                endY = r.top + r.height/2 - rect.top;
+            }
+
+            for(let i=0; i<5; i++) {
+                setTimeout(() => {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip-fly';
+                    chip.style.left = startX + 'px';
+                    chip.style.top = startY + 'px';
+                    table.appendChild(chip);
+
+                    chip.animate([
+                        { left: startX + 'px', top: startY + 'px', transform: 'scale(1)' },
+                        { left: endX + 'px', top: endY + 'px', transform: 'scale(0.8)' }
+                    ], {
+                        duration: 600,
+                        easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+                    }).onfinish = () => chip.remove();
+                }, i * 100);
+            }
         },
         async animateCut() {
             const table = document.getElementById('game-table');
@@ -1254,13 +1618,17 @@
                     isDeckCut: game.isDeckCut,
                     currentDealAmount: game.currentDealAmount,
                     lastRaiserIdx: game.lastRaiserIdx,
+                    highestPreGameBet: game.highestPreGameBet,
+                    cutQueued: game.cutQueued,
+                    canRaiseChain: game.canRaiseChain,
                     players: game.players.map(p => ({
                         money: p.money,
                         paidThisRound: p.paidThisRound,
+                        totalContributed: p.totalContributed,
                         isOut: p.isOut,
                         status: p.status,
                         hasCut: p.hasCut,
-                        hand: p.hand // In real production we'd hide others' hands, but for this task we keep it simple
+                        hand: p.hand
                     }))
                 }
             });
@@ -1292,20 +1660,26 @@
             game.isDeckCut = s.isDeckCut;
             game.currentDealAmount = s.currentDealAmount;
             game.lastRaiserIdx = s.lastRaiserIdx;
+            game.highestPreGameBet = s.highestPreGameBet;
+            game.cutQueued = s.cutQueued;
+            game.canRaiseChain = s.canRaiseChain;
             game.players.forEach((p, i) => {
-                p.money = s.players[i].money;
-                p.paidThisRound = s.players[i].paidThisRound;
-                p.isOut = s.players[i].isOut;
-                p.status = s.players[i].status;
-                p.hasCut = s.players[i].hasCut;
-                if (s.players[i].hand) p.hand = s.players[i].hand;
+                if (s.players[i]) {
+                    p.money = s.players[i].money;
+                    p.paidThisRound = s.players[i].paidThisRound;
+                    p.totalContributed = s.players[i].totalContributed;
+                    p.isOut = s.players[i].isOut;
+                    p.status = s.players[i].status;
+                    p.hasCut = s.players[i].hasCut;
+                    if (s.players[i].hand) p.hand = s.players[i].hand;
+                }
             });
             ui.renderTable();
         },
         startActualGame() {
             game.players = this.players.map((p, i) => ({
-                id: i, name: p.isMe ? 'You' : p.name, avatar: '👤', isAI: false, money: 15, hand: [],
-                isActive: true, isOut: false, isEliminated: false, hasCut: false, paidThisRound: 0, status: '', cardsToChange: []
+                id: i, name: p.isMe ? 'You' : p.name, avatar: '👤', isAI: false, money: 10, hand: [],
+                isActive: true, isOut: false, isEliminated: false, hasCut: false, paidThisRound: 0, totalContributed: 0, status: '', cardsToChange: []
             }));
             game.myId = this.players.findIndex(p => p.isMe);
             ui.showScreen('screen-game');
