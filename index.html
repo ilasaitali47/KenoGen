@@ -469,6 +469,7 @@
         lastRaiserIdx: -1,
         doublerIdx: -1,
         isDoubled: false,
+        isDeckCut: false,
         myId: 0,
 
         startSetup(mode) {
@@ -514,6 +515,8 @@
             this.lastRaiserIdx = -1;
             this.doublerIdx = -1;
             this.isDoubled = false;
+            this.isDeckCut = false;
+            this.isAnimating = false;
 
             this.players.forEach(p => {
                 p.hand = [];
@@ -617,6 +620,7 @@
         },
 
         async action(type, val = 0, isRemote = false) {
+            if (this.isAnimating) return;
             if (this.mode === 'online' && !isRemote && this.activeIdx === this.myId) {
                 multiplayer.send({ type: 'game_action', action: type, val: val, pIdx: this.myId });
             }
@@ -624,10 +628,14 @@
             if (type === 'skip') {
                 ui.toast(`⏭️ ${p.name} SKIPPED`);
             } else if (type === 'cut') {
+                this.isDeckCut = true;
                 p.hasCut = true;
+                this.deck = this.cutDeck(this.deck);
                 ui.toast(`✂️ ${p.name} CUT the deck`);
-                audio.whoosh();
-                await new Promise(r => setTimeout(r, 2500));
+                this.isAnimating = true;
+                ui.renderTable();
+                await ui.animateCut();
+                this.isAnimating = false;
             } else if (type === 'double') {
                 this.isDoubled = true;
                 this.doublerIdx = this.activeIdx;
@@ -746,12 +754,6 @@
             this.deck = this.generateDeck();
             this.shuffle(this.deck);
 
-            // Cut animation if anyone cut
-            const cutters = this.players.filter(p => p.hasCut);
-            if (cutters.length > 0) {
-                this.cutDeck(this.deck);
-                await new Promise(r => setTimeout(r, 1000));
-            }
 
             // Deal 5 cards each
             for (let c = 0; c < HAND_SIZE; c++) {
@@ -1001,12 +1003,12 @@
                 const isDealer = this.activeIdx === this.dealerIdx;
 
                 if (isP2) {
-                    if (rand < 0.35) this.action('cut');
+                    if (rand < 0.35 && !this.isDeckCut) this.action('cut');
                     else if (rand < 0.60) this.action('raise_pre');
                     else if (rand < 0.80) this.action('double');
                     else this.action('skip');
                 } else if (!isDealer) {
-                    if (rand < 0.35) this.action('cut');
+                    if (rand < 0.35 && !this.isDeckCut) this.action('cut');
                     else if (rand < 0.60) this.action('raise_pre');
                     else this.action('skip');
                 } else {
@@ -1134,7 +1136,7 @@
                 const isP2 = game.activeIdx === game.getNextActive(game.dealerIdx);
                 if (isP2) container.innerHTML += `<button class="btn btn-gold" onclick="game.action('double')">💰 DOUBLE</button>`;
                 container.innerHTML += `<button class="btn" onclick="game.action('raise_pre')">⬆️ RAISE</button>`;
-                if (game.activeIdx !== game.dealerIdx) container.innerHTML += `<button class="btn" onclick="game.action('cut')">✂️ CUT</button>`;
+                if (game.activeIdx !== game.dealerIdx && !game.isDeckCut) container.innerHTML += `<button class="btn" onclick="game.action('cut')">✂️ CUT</button>`;
                 container.innerHTML += `<button class="btn btn-red" onclick="game.action('skip')">⏭️ SKIP</button>`;
             } else if (game.state === 'DOUBLE_PAYMENT') {
                 container.innerHTML += `<button class="btn btn-gold" onclick="game.action('pay')">✅ PAY $${game.entryAmount - p.paidThisRound}</button>`;
@@ -1165,6 +1167,29 @@
             document.getElementById('win-hand-name').textContent = winner.finalHand.name;
             document.getElementById('win-amount').textContent = `+$${game.pot}`;
             setTimeout(() => over.classList.add('hidden'), 4000);
+        },
+        async animateCut() {
+            const table = document.getElementById('game-table');
+            const cutDiv = document.createElement('div');
+            cutDiv.style.cssText = "position:absolute; width:100px; height:120px; z-index:100;";
+            cutDiv.innerHTML = `
+                <div id="cut-top" class="card back" style="position:absolute; top:0; left:0; transition: all 1s;"></div>
+                <div id="cut-bottom" class="card back" style="position:absolute; top:10px; left:5px; transition: all 1s;"></div>
+            `;
+            table.appendChild(cutDiv);
+            audio.whoosh();
+            await new Promise(r => setTimeout(r, 500));
+            const top = document.getElementById('cut-top');
+            const bottom = document.getElementById('cut-bottom');
+            top.style.transform = "translateX(-80px) translateY(-20px) rotate(-10deg)";
+            bottom.style.transform = "translateX(80px) translateY(20px) rotate(10deg)";
+            await new Promise(r => setTimeout(r, 1000));
+            top.style.zIndex = "1"; bottom.style.zIndex = "2";
+            top.style.transform = "translateX(0) translateY(10px) rotate(0deg)";
+            bottom.style.transform = "translateX(0) translateY(0) rotate(0deg)";
+            await new Promise(r => setTimeout(r, 1000));
+            audio.ding();
+            cutDiv.remove();
         }
     };
 
@@ -1226,6 +1251,7 @@
                     activeIdx: game.activeIdx,
                     state: game.state,
                     entryAmount: game.entryAmount,
+                    isDeckCut: game.isDeckCut,
                     currentDealAmount: game.currentDealAmount,
                     lastRaiserIdx: game.lastRaiserIdx,
                     players: game.players.map(p => ({
@@ -1233,6 +1259,7 @@
                         paidThisRound: p.paidThisRound,
                         isOut: p.isOut,
                         status: p.status,
+                        hasCut: p.hasCut,
                         hand: p.hand // In real production we'd hide others' hands, but for this task we keep it simple
                     }))
                 }
@@ -1262,6 +1289,7 @@
             game.activeIdx = s.activeIdx;
             game.state = s.state;
             game.entryAmount = s.entryAmount;
+            game.isDeckCut = s.isDeckCut;
             game.currentDealAmount = s.currentDealAmount;
             game.lastRaiserIdx = s.lastRaiserIdx;
             game.players.forEach((p, i) => {
@@ -1269,6 +1297,7 @@
                 p.paidThisRound = s.players[i].paidThisRound;
                 p.isOut = s.players[i].isOut;
                 p.status = s.players[i].status;
+                p.hasCut = s.players[i].hasCut;
                 if (s.players[i].hand) p.hand = s.players[i].hand;
             });
             ui.renderTable();
